@@ -1,9 +1,10 @@
 import 'dart:math';
-
+import 'package:business_app/widgets/chart.dart';
 import 'package:business_app/widgets/new_transaction.dart';
 import 'package:flutter/material.dart';
 import './widgets/transaction_list.dart';
 import './models/transaction.dart';
+import './widgets/chart.dart';
 
 void main() => runApp(MyApp());
 
@@ -61,6 +62,14 @@ class _MyHomePageState extends State<MyHomePage> {
     ),*/
   ];
 
+  List<Transaction> get _recentTransactions {
+    return _userTransaction.where((element) {
+      return element.date.isAfter(DateTime.now().subtract(
+        Duration(days: 7),
+      ));
+    }).toList();
+  }
+
   void _addNewTransaction(String newTitle, double newAmount) {
     final newVal = Transaction(
       title: newTitle,
@@ -107,7 +116,9 @@ class _MyHomePageState extends State<MyHomePage> {
               elevation: 6,
               child: Container(
                 width: double.infinity,
-                child: const Text("Chart"),
+                child: Chart(
+                  recentTransaction: _recentTransactions,
+                ),
               ),
             ),
             TransactionList(userTransaction: _userTransaction),
