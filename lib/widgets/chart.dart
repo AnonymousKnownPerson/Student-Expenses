@@ -1,4 +1,5 @@
-import 'package:business_app/models/transaction.dart';
+import '../models/transaction.dart';
+import './chart_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -12,14 +13,23 @@ class Chart extends StatelessWidget {
         Duration(days: index),
       );
       var totalSum = 0.0;
+      var totalTotalSum = 0.0;
+      var percentage = 0.0;
       for (var transaction in recentTransaction) {
         if (transaction.date.day == weekday.day &&
             transaction.date.month == weekday.month &&
             transaction.date.year == weekday.year) {
           totalSum += transaction.amount;
         }
+        totalTotalSum += transaction.amount; //zła logika, poprawić później
       }
-      return {'day': DateFormat.E().format(weekday), 'amount': totalSum};
+      percentage = totalSum / totalTotalSum;
+      if (percentage.isNaN) percentage = 0.0;
+      return {
+        'day': DateFormat.E().format(weekday).substring(0, 1),
+        'amount': totalSum,
+        'percentage': percentage,
+      };
     });
   }
 
@@ -28,13 +38,19 @@ class Chart extends StatelessWidget {
     print(groupedTransactionValues);
     return Card(
       elevation: 6,
-      margin: EdgeInsets.all(20),
+      margin: const EdgeInsets.all(20),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: groupedTransactionValues.map((data) {
-          return Text(data[day] + ' : ' + data[amount]);
+          return Expanded(
+            child: ChartBar(
+              label: data["day"].toString(),
+              barAmount: data["amount"] as double,
+              barAmountPercentage: data["percentage"] as double,
+            ),
+          );
         }).toList(),
       ),
-      //child: Row(children: [,]),
     );
   }
 }
