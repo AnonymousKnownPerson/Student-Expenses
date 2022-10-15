@@ -15,6 +15,7 @@ class Chart extends StatelessWidget {
       var totalSum = 0.0;
       var totalTotalSum = 0.0;
       var percentage = 0.0;
+      print(DateTime.now());
       for (var transaction in recentTransaction) {
         if (transaction.date.day == weekday.day &&
             transaction.date.month == weekday.month &&
@@ -26,11 +27,11 @@ class Chart extends StatelessWidget {
       percentage = totalSum / totalTotalSum;
       if (percentage.isNaN) percentage = 0.0;
       return {
-        'day': DateFormat.E().format(weekday).substring(0, 1),
+        'day': DateFormat.E().format(weekday).substring(0, 3),
         'amount': totalSum,
         'percentage': percentage,
       };
-    });
+    }).reversed.toList();
   }
 
   @override

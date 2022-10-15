@@ -20,7 +20,10 @@ class ChartBar extends StatelessWidget {
           const SizedBox(
             height: 4,
           ),
-          FittedBox(child: Text('\$${barAmount.toStringAsFixed(0)}')),
+          Container(
+              height: 20,
+              child:
+                  FittedBox(child: Text('\$${barAmount.toStringAsFixed(0)}'))),
           const SizedBox(
             height: 4,
           ),
@@ -46,7 +49,6 @@ class ChartBar extends StatelessWidget {
                       color: Theme.of(context).colorScheme.primary,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: null,
                   ),
                 ),
               ],
