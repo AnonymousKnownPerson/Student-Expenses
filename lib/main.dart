@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
               secondary: Colors.grey,
             ),
         fontFamily: 'Quicksand',
-        appBarTheme: AppBarTheme(
+        appBarTheme: const AppBarTheme(
           toolbarTextStyle: TextStyle(fontFamily: 'Quicksand'),
         ),
       ),
@@ -73,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Transaction> get _recentTransactions {
     return _userTransaction.where((element) {
       return element.date.isAfter(DateTime.now().subtract(
-        Duration(days: 7),
+        const Duration(days: 7),
       ));
     }).toList();
   }
@@ -123,6 +123,9 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       centerTitle: true,
     );
+    final mainHeight = MediaQuery.of(context).size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top;
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: appBar,
@@ -130,37 +133,33 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Row(
-              children: [
-                Text('Show Chart'),
-                Switch(
-                  value: _showChart,
-                  activeColor: Theme.of(context).colorScheme.primary,
-                  onChanged: (val) {
-                    setState(() {
-                      _showChart = val;
-                      print(_showChart);
-                    });
-                  },
-                ),
-              ],
+            SizedBox(
+              height: mainHeight * 0.1,
+              child: Row(
+                children: [
+                  const Text('Show Chart'),
+                  Switch(
+                    value: _showChart,
+                    activeColor: Theme.of(context).colorScheme.primary,
+                    onChanged: (val) {
+                      setState(() {
+                        _showChart = val;
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
             _showChart
-                ? Container(
-                    height: (MediaQuery.of(context).size.height -
-                            appBar.preferredSize.height -
-                            MediaQuery.of(context).padding.top) *
-                        0.25,
+                ? SizedBox(
+                    height: mainHeight * 0.25,
                     child: Chart(
                       recentTransaction: _recentTransactions,
                     ),
                   )
                 : Container(),
-            Container(
-              height: (MediaQuery.of(context).size.height -
-                      appBar.preferredSize.height -
-                      MediaQuery.of(context).padding.top) *
-                  0.75,
+            SizedBox(
+              height: _showChart ? mainHeight * 0.65 : mainHeight * 0.90,
               child: TransactionList(
                 userTransaction: _userTransaction,
                 deleteTransaction: _deleteNewTransaction,
