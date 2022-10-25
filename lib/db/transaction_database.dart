@@ -19,6 +19,7 @@ class TransactionDatabase {
     //On iOS and MacOS, it is the Documents directory."
     //Use PathProvider next time
     final path = join(dbPath, filepath);
+    print(path);
     return await openDatabase(path, version: 1, onCreate: _createDB);
   }
 
@@ -65,6 +66,17 @@ class TransactionDatabase {
       return Transaction.fromJson(result.first);
     } else {
       throw Exception('Id $id not found');
+    }
+  }
+
+  Future readLatestTransactionId() async {
+    final db = await instance.database;
+    final result = await db.rawQuery(
+        '''SELECT max(${TransactionFields.id}), ${TransactionFields.title}, ${TransactionFields.amount}, ${TransactionFields.date} FROM $tableTransactions''');
+    if (result.isNotEmpty) {
+      return Transaction.fromJson(result.first).id;
+    } else {
+      throw Exception('Table transactions is empty');
     }
   }
 

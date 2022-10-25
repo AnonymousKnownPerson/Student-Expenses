@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'db/transaction_database.dart';
 import 'widget/transaction_list.dart';
 import 'model/transaction.dart';
+import 'package:getwidget/getwidget.dart';
 
 void main() {
   /*
@@ -44,34 +45,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  /*final List<Transaction> _userTransaction = [
-    Transaction(
-      id: 1,
-      title: 'Udemy course - Flutter',
-      amount: 22.12,
-      date: DateTime.parse('2022-10-10 11:05:47.352843'),
-    ),
-    Transaction(
-      id: 2,
-      title: 'Udemy course - JavaScript',
-      amount: 34.12,
-      date: DateTime.parse('2022-10-11 11:05:47.352843'),
-    ),
-    Transaction(
-      id: 3,
-      title: 'Spotify Subscription',
-      amount: 20.23,
-      date: DateTime.parse('2022-10-09 11:05:47.352843'),
-    ),
-    Transaction(
-      id: 4,
-      title: 'Frog shop',
-      amount: 37.23,
-      date: DateTime.parse('2022-10-07 11:05:47.352843'),
-    ),
-  ];*/
   List<Transaction> _userTransaction = [];
-  bool isLoading = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -86,9 +61,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future refreshTransactions() async {
-    setState(() => isLoading = true);
+    setState(() => _isLoading = true);
     _userTransaction = await TransactionDatabase.instance.readAllTransactions();
-    setState(() => isLoading = false);
+    setState(() => _isLoading = false);
   }
 
   List<Transaction> get _recentTransactions {
@@ -101,24 +76,25 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _showChart = false;
 
-  void _addNewTransaction(String newTitle, double newAmount, DateTime newDate) {
+  Future _addNewTransaction(
+    String newTitle,
+    double newAmount,
+    DateTime newDate,
+  ) async {
     final newVal = Transaction(
       title: newTitle,
       amount: newAmount,
       date: newDate,
-      id: Random().nextInt(100000),
     );
-    setState(() {
-      _userTransaction.add(newVal);
-    });
+    await TransactionDatabase.instance.create(newVal);
+    refreshTransactions();
   }
 
-  void _deleteNewTransaction(int id) {
-    setState(() {
-      _userTransaction.removeWhere((element) {
-        return element.id == id;
-      });
-    });
+  Future _deleteNewTransaction(
+    int id,
+  ) async {
+    await TransactionDatabase.instance.delete(id);
+    refreshTransactions();
   }
 
   void _addButtonAction(BuildContext ctx) {
@@ -151,43 +127,47 @@ class _MyHomePageState extends State<MyHomePage> {
       resizeToAvoidBottomInset: false,
       appBar: appBar,
       body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            SizedBox(
-              height: mainHeight * 0.1,
-              child: Row(
-                children: [
-                  const Text('Show Chart'),
-                  Switch(
-                    value: _showChart,
-                    activeColor: Theme.of(context).colorScheme.primary,
-                    onChanged: (val) {
-                      setState(() {
-                        _showChart = val;
-                      });
-                    },
+        child: !_isLoading
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  SizedBox(
+                    height: mainHeight * 0.1,
+                    child: Row(
+                      children: [
+                        const Text('Show Chart'),
+                        Switch(
+                          value: _showChart,
+                          activeColor: Theme.of(context).colorScheme.primary,
+                          onChanged: (val) {
+                            setState(() {
+                              _showChart = val;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  _showChart
+                      ? SizedBox(
+                          height: mainHeight * 0.25,
+                          child: Chart(
+                            recentTransaction: _recentTransactions,
+                          ),
+                        )
+                      : Container(),
+                  SizedBox(
+                    height: _showChart ? mainHeight * 0.65 : mainHeight * 0.90,
+                    child: TransactionList(
+                      userTransaction: _userTransaction,
+                      deleteTransaction: _deleteNewTransaction,
+                    ),
                   ),
                 ],
+              )
+            : const Positioned.fill(
+                child: Center(child: GFLoader()),
               ),
-            ),
-            _showChart
-                ? SizedBox(
-                    height: mainHeight * 0.25,
-                    child: Chart(
-                      recentTransaction: _recentTransactions,
-                    ),
-                  )
-                : Container(),
-            SizedBox(
-              height: _showChart ? mainHeight * 0.65 : mainHeight * 0.90,
-              child: TransactionList(
-                userTransaction: _userTransaction,
-                deleteTransaction: _deleteNewTransaction,
-              ),
-            ),
-          ],
-        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(

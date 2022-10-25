@@ -11,13 +11,13 @@ class TransactionFields {
 }
 
 class Transaction {
-  final int? id;
+  int? id;
   final String title;
   final double amount;
   final DateTime date;
 
-  const Transaction({
-    required this.id,
+  Transaction({
+    this.id,
     required this.title,
     required this.amount,
     required this.date,
