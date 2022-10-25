@@ -1,10 +1,11 @@
 import 'dart:math';
-import 'package:business_app/widgets/chart.dart';
-import 'package:business_app/widgets/new_transaction.dart';
+import 'package:business_app/widget/chart.dart';
+import 'package:business_app/widget/new_transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import './widgets/transaction_list.dart';
-import './models/transaction.dart';
+import 'db/transaction_database.dart';
+import 'widget/transaction_list.dart';
+import 'model/transaction.dart';
 
 void main() {
   /*
@@ -43,7 +44,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final List<Transaction> _userTransaction = [
+  /*final List<Transaction> _userTransaction = [
     Transaction(
       id: 1,
       title: 'Udemy course - Flutter',
@@ -68,7 +69,27 @@ class _MyHomePageState extends State<MyHomePage> {
       amount: 37.23,
       date: DateTime.parse('2022-10-07 11:05:47.352843'),
     ),
-  ];
+  ];*/
+  List<Transaction> _userTransaction = [];
+  bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    refreshTransactions();
+  }
+
+  @override
+  void dispose() {
+    TransactionDatabase.instance.close();
+    super.dispose();
+  }
+
+  Future refreshTransactions() async {
+    setState(() => isLoading = true);
+    _userTransaction = await TransactionDatabase.instance.readAllTransactions();
+    setState(() => isLoading = false);
+  }
 
   List<Transaction> get _recentTransactions {
     return _userTransaction.where((element) {
