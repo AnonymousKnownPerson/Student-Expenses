@@ -1,11 +1,23 @@
 import 'dart:math';
-import 'package:business_app/widgets/chart.dart';
-import 'package:business_app/widgets/new_transaction.dart';
+import 'package:business_app/widget/chart.dart';
+import 'package:business_app/widget/new_transaction.dart';
 import 'package:flutter/material.dart';
-import './widgets/transaction_list.dart';
-import './models/transaction.dart';
+import 'package:flutter/services.dart';
+import 'db/transaction_database.dart';
+import 'widget/transaction_list.dart';
+import 'model/transaction.dart';
+import 'package:getwidget/getwidget.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  /*
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  */
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -19,7 +31,7 @@ class MyApp extends StatelessWidget {
               secondary: Colors.grey,
             ),
         fontFamily: 'Quicksand',
-        appBarTheme: AppBarTheme(
+        appBarTheme: const AppBarTheme(
           toolbarTextStyle: TextStyle(fontFamily: 'Quicksand'),
         ),
       ),
@@ -33,59 +45,56 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final List<Transaction> _userTransaction = [
-    Transaction(
-      id: 1,
-      title: 'Udemy course - Flutter',
-      amount: 22.12,
-      date: DateTime.parse('2022-10-10 11:05:47.352843'),
-    ),
-    Transaction(
-      id: 2,
-      title: 'Udemy course - JavaScript',
-      amount: 34.12,
-      date: DateTime.parse('2022-10-11 11:05:47.352843'),
-    ),
-    Transaction(
-      id: 3,
-      title: 'Spotify Subscription',
-      amount: 20.23,
-      date: DateTime.parse('2022-10-09 11:05:47.352843'),
-    ),
-    Transaction(
-      id: 4,
-      title: 'Frog shop',
-      amount: 37.23,
-      date: DateTime.parse('2022-10-07 11:05:47.352843'),
-    ),
-  ];
+  List<Transaction> _userTransaction = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    refreshTransactions();
+  }
+
+  @override
+  void dispose() {
+    TransactionDatabase.instance.close();
+    super.dispose();
+  }
+
+  Future refreshTransactions() async {
+    setState(() => _isLoading = true);
+    _userTransaction = await TransactionDatabase.instance.readAllTransactions();
+    setState(() => _isLoading = false);
+  }
 
   List<Transaction> get _recentTransactions {
     return _userTransaction.where((element) {
       return element.date.isAfter(DateTime.now().subtract(
-        Duration(days: 7),
+        const Duration(days: 7),
       ));
     }).toList();
   }
 
-  void _addNewTransaction(String newTitle, double newAmount, DateTime newDate) {
+  bool _showChart = false;
+
+  Future _addNewTransaction(
+    String newTitle,
+    double newAmount,
+    DateTime newDate,
+  ) async {
     final newVal = Transaction(
       title: newTitle,
       amount: newAmount,
       date: newDate,
-      id: Random().nextInt(100000),
     );
-    setState(() {
-      _userTransaction.add(newVal);
-    });
+    await TransactionDatabase.instance.create(newVal);
+    refreshTransactions();
   }
 
-  void _deleteNewTransaction(int id) {
-    setState(() {
-      _userTransaction.removeWhere((element) {
-        return element.id == id;
-      });
-    });
+  Future _deleteNewTransaction(
+    int id,
+  ) async {
+    await TransactionDatabase.instance.delete(id);
+    refreshTransactions();
   }
 
   void _addButtonAction(BuildContext ctx) {
@@ -102,37 +111,63 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final appBar = AppBar(
+      title: const Text(
+        'Student Expenses',
+        style: TextStyle(
+          fontFamily: 'OpenSans',
+        ),
+      ),
+      centerTitle: true,
+    );
+    final mainHeight = MediaQuery.of(context).size.height -
+        appBar.preferredSize.height -
+        MediaQuery.of(context).padding.top;
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        title: const Text(
-          'Student Expenses',
-          style: TextStyle(
-            fontFamily: 'OpenSans',
-          ),
-        ),
-        centerTitle: true,
-      ),
+      appBar: appBar,
       body: SingleChildScrollView(
-        child: Column(
-          //mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Card(
-              elevation: 6,
-              child: Container(
-                width: double.infinity,
-                child: Chart(
-                  recentTransaction: _recentTransactions,
-                ),
+        child: !_isLoading
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  SizedBox(
+                    height: mainHeight * 0.1,
+                    child: Row(
+                      children: [
+                        const Text('Show Chart'),
+                        Switch(
+                          value: _showChart,
+                          activeColor: Theme.of(context).colorScheme.primary,
+                          onChanged: (val) {
+                            setState(() {
+                              _showChart = val;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  _showChart
+                      ? SizedBox(
+                          height: mainHeight * 0.25,
+                          child: Chart(
+                            recentTransaction: _recentTransactions,
+                          ),
+                        )
+                      : Container(),
+                  SizedBox(
+                    height: _showChart ? mainHeight * 0.65 : mainHeight * 0.90,
+                    child: TransactionList(
+                      userTransaction: _userTransaction,
+                      deleteTransaction: _deleteNewTransaction,
+                    ),
+                  ),
+                ],
+              )
+            : const Positioned.fill(
+                child: Center(child: GFLoader()),
               ),
-            ),
-            TransactionList(
-              userTransaction: _userTransaction,
-              deleteTransaction: _deleteNewTransaction,
-            ),
-          ],
-        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(

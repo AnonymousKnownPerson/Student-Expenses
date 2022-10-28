@@ -13,22 +13,23 @@ class ChartBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(3),
-      child: Column(
+    return LayoutBuilder(builder: (context, constraints) {
+      return Column(
         children: [
-          const SizedBox(
-            height: 4,
+          SizedBox(
+            height: constraints.maxHeight * 0.075,
+          ),
+          FittedBox(
+            child: Container(
+                height: constraints.maxHeight * 0.15,
+                child: FittedBox(
+                    child: Text('\$${barAmount.toStringAsFixed(0)}'))),
+          ),
+          SizedBox(
+            height: constraints.maxHeight * 0.025,
           ),
           Container(
-              height: 20,
-              child:
-                  FittedBox(child: Text('\$${barAmount.toStringAsFixed(0)}'))),
-          const SizedBox(
-            height: 4,
-          ),
-          Container(
-            height: 60,
+            height: constraints.maxHeight * 0.50,
             width: 10,
             child: Stack(
               children: [
@@ -54,17 +55,22 @@ class ChartBar extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(
-            height: 5,
+          SizedBox(
+            height: constraints.maxHeight * 0.025,
           ),
-          Text(
-            label,
+          Container(
+            height: constraints.maxHeight * 0.15,
+            child: FittedBox(
+              child: Text(
+                label,
+              ),
+            ),
           ),
-          const SizedBox(
-            height: 4,
+          SizedBox(
+            height: constraints.maxHeight * 0.075,
           ),
         ],
-      ),
-    );
+      );
+    });
   }
 }

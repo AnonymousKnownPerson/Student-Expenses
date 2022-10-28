@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
-import '../models/transaction.dart';
+import '../model/transaction.dart';
 import 'package:intl/intl.dart';
 
-class TransactionList extends StatelessWidget {
+class TransactionList extends StatefulWidget {
   final List<Transaction> userTransaction;
   final Function deleteTransaction;
 
-  TransactionList({
+  const TransactionList({
+    super.key,
     required this.userTransaction,
     required this.deleteTransaction,
   });
+
+  @override
+  State<TransactionList> createState() => _TransactionListState();
+}
+
+class _TransactionListState extends State<TransactionList> {
+  bool isLoading = false;
+
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 420,
-      child: userTransaction.isEmpty
+      child: widget.userTransaction.isEmpty
           ? Column(
               children: [
                 const Text(
@@ -23,12 +32,12 @@ class TransactionList extends StatelessWidget {
                 const SizedBox(
                   height: 20,
                 ),
-                Container(
+                SizedBox(
+                  height: 300,
                   child: Image.asset(
                     'assets/images/waiting.png',
                     fit: BoxFit.cover,
                   ),
-                  height: 300,
                 ),
               ],
             )
@@ -49,11 +58,11 @@ class TransactionList extends StatelessWidget {
                         foregroundColor: Colors.white,
                         child: FittedBox(
                           child: Text(
-                              '\$${userTransaction[index].amount.toStringAsFixed(2)}'),
+                              '\$${widget.userTransaction[index].amount.toStringAsFixed(2)}'),
                         ),
                       ),
                       title: Text(
-                        userTransaction[index].title.toString(),
+                        widget.userTransaction[index].title.toString(),
                         style: const TextStyle(
                           fontSize: 19,
                           fontWeight: FontWeight.bold,
@@ -63,18 +72,19 @@ class TransactionList extends StatelessWidget {
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.secondary,
                         ),
-                        DateFormat.yMMMd().format(userTransaction[index].date),
+                        DateFormat.yMMMd()
+                            .format(widget.userTransaction[index].date),
                       ),
                       trailing: IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () =>
-                            deleteTransaction(userTransaction[index].id),
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => widget.deleteTransaction(
+                            widget.userTransaction[index].id),
                       ),
                     ),
                   ),
                 );
               },
-              itemCount: userTransaction.length,
+              itemCount: widget.userTransaction.length,
             ),
     );
   }
